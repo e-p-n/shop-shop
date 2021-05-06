@@ -4,8 +4,16 @@ import { useQuery } from '@apollo/react-hooks';
 
 import { QUERY_PRODUCTS } from "../utils/queries";
 import { useStoreContext } from "../utils/GlobalState";
-import { UPDATE_PRODUCTS } from "../utils/actions";
+import { 
+  REMOVE_FROM_CART,
+  UPDATE_CART_QUANTITY,
+  ADD_TO_CART,
+  UPDATE_PRODUCTS 
+} from "../utils/actions";
+
 import spinner from '../assets/spinner.gif'
+
+import Cart from '../components/Cart';
 
 function Detail() {
   const [state, dispatch] = useStoreContext();
@@ -15,7 +23,32 @@ function Detail() {
 
   const { loading, data } = useQuery(QUERY_PRODUCTS);
 
-  const { products } = state;
+  const { products, cart } = state;
+  
+  const itemInCart = cart.find((cartItem) => cartItem._id === id);
+
+  const addToCart = () => {
+  
+    if (itemInCart) {
+      dispatch({
+        type: UPDATE_CART_QUANTITY,
+        _id: id,
+        purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+      });
+    } else {
+      dispatch({
+        type: ADD_TO_CART,
+        product: { ...currentProduct, purchaseQuantity: 1 }
+      });
+    }
+  };
+
+  const removeFromCart = () => {
+    dispatch({
+      type: REMOVE_FROM_CART,
+      _id: currentProduct._id
+    })
+  }
 
   useEffect(() => {
     if (products.length) {
@@ -46,10 +79,11 @@ function Detail() {
             <strong>Price:</strong>
             ${currentProduct.price}
             {" "}
-            <button>
+            <button onClick={addToCart}>
               Add to Cart
             </button>
-            <button>
+            
+            <button disabled={!itemInCart} onClick={removeFromCart}>
               Remove from Cart
             </button>
           </p>
@@ -63,6 +97,7 @@ function Detail() {
       {
         loading ? <img src={spinner} alt="loading" /> : null
       }
+      <Cart />
     </>
   );
 };
